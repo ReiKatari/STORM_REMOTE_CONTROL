@@ -1,65 +1,35 @@
-<div align="center">
+# STORM REMOTE CONTROL
 
-<img src="logo.png" width="128" height="128" alt="STORM REMOTE CONTROL Logo" />
+## **О проекте**
+STORM REMOTE CONTROL — клиент-серверный комплекс для удаленного управления медиа-центром, играми и рабочим столом Windows со смартфона или другого ПК по локальной сети.
 
-# ⚡ STORM REMOTE CONTROL
+## **Происхождение и форки**
+Оригинальная разработка ReiKatari.
 
-<p align="center">
-  <b>Удаленное управление и трансляция экрана между устройствами с минимальной задержкой.</b>
-</p>
+## **Технологический стек**
+- **Языки программирования**: C# (.NET 9.0), TypeScript
+- **Сетевой протокол**: Secure WebSockets (WSS), REST API
+- **Интерфейс**: WPF (Desktop Server), React / PWA (Mobile Web Client)
 
-[![Version](https://img.shields.io/badge/version-0.6.4-00D2FF.svg?style=for-the-badge)](https://github.com/ReiKatari/STORM_REMOTE_CONTROL)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%2010-0EA5E9.svg?style=for-the-badge)](https://github.com/ReiKatari/STORM_REMOTE_CONTROL)
-[![Publisher](https://img.shields.io/badge/Publisher-STORM%20TEAM-10B981.svg?style=for-the-badge)](https://github.com/ReiKatari)
-[![Developer](https://img.shields.io/badge/Author-ReiKatari-F59E0B.svg?style=for-the-badge)](https://github.com/ReiKatari)
-[![Signed](https://img.shields.io/badge/Security-SHA256%20Signed-10B981.svg?style=for-the-badge)](https://github.com/ReiKatari)
+## **Ключевые возможности**
+- **Виртуальный геймпад и трекпад**: Управление курсором, мультимедийными клавишами и эмуляция кнопок контроллера.
+- **Управление питанием и громкостью**: Выключение, сон, блокировка ПК и регулировка звука с телефона.
+- **Запуск приложений в один клик**: Настраиваемые плитки быстрого старта игр и эмуляторов.
 
-</div>
+## **Поддерживаемые платформы и эмуляторы**
+- **Сервер**: Windows 10, Windows 11 (x64)
+- **Клиент**: Android, iOS, Windows, любой современный браузер
 
----
+## **Установка и запуск**
+1. Скачайте сервер из раздела **Releases** на ПК.
+2. Запустите сервер и отсканируйте QR-код в мобильном браузере для подключения.
 
-## 🌟 О проекте / Overview
+## **Безопасность и цифровые подписи**
+Подписано цифровой подписью **CN=STORM SOFT, O=STORM EDEN** (SHA-256 Authenticode).
 
-**STORM REMOTE CONTROL** — компонент программного комплекса **STORM**, разработанный с упором на максимальную производительность, современный дизайн и надёжность.
+## **Авторы и лицензия**
+- **Автор проекта**: ReiKatari
+- **Лицензия**: MIT License
 
-* **Версия:** $ver
-* **Издатель:** STORM TEAM
-* **Ведущий разработчик:** ReiKatari
-* **Технологический стек:** $tech
-
----
-
-## 🚀 Установка / Installation
-
-Установка производится через единый инсталлятор **STORM INSTALLER**:
-
-1. Запустите файл STORM_STORM_REMOTE_CONTROL_0.6.4_Setup.exe.
-2. Выберите режим:
-   * **Стандартная установка** — установка в C:\Program Files\STORM REMOTE CONTROL с созданием ярлыков и регистрацией в системе.
-   * **Портативная версия** — распаковка в любую выбранную папку без изменения реестра.
-3. Опция автоматической регистрации доверенного сертификата STORM TEAM исключает предупреждения SmartScreen и Smart App Control.
-
----
-
-## 🛡️ Безопасность и Цифровая подпись / Code Signing
-
-Все исполняемые файлы и инсталляторы подписаны сертификатом **STORM TEAM** с использованием хэширования SHA-256 и RFC 3161 Timestamping.
-
-* Для ручной установки сертификата в хранилище доверенных корневых центров запустите:
-  Files\Разблокировать_И_Установить_Сертификат.bat от имени Администратора.
-
----
-
-## 📁 Структура репозитория / Structure
-
-* Assembling/ — скомпилированные релизные бинарные файлы и зависимости программы.
-* Files/ — инсталлятор, сертификат STORM_Certificate.cer и сервисные скрипты.
-* Sources/ — исходный код решения.
-
----
-
-## 👥 Авторы и Лицензия / Credits
-
-* **Разработчик:** [ReiKatari](https://github.com/ReiKatari)
-* **Издатель:** **STORM TEAM**
-* © 2026 STORM TEAM. Все права защищены.
+## **Благодарности**
+- **Сообщество разработчиков сетевых протоколов** — за стандарты WebSockets.
