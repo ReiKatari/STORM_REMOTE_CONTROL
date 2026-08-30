@@ -1,0 +1,14 @@
+<Window
+    x:Class="StormRemoteControl.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2000/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2000/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="STORM REMOTE CONTROL v0.0.1">
+
+    <Grid Background="Transparent">
+        <!-- Main framework hosting views like MainPage or SessionPage -->
+        <Frame x:Name="RootFrame" />
+    </Grid>
+</Window>

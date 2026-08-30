@@ -1,0 +1,15 @@
+INNER EXCEPTION:
+Microsoft.UI.Xaml.Markup.XamlParseException: XAML parsing failed.
+   at WinRT.ExceptionHelpers.<ThrowExceptionForHR>g__Throw|38_0(Int32 hr)
+   at ABI.Microsoft.UI.Xaml.IApplicationStaticsMethods.LoadComponent(IObjectReference _obj, Object component, Uri resourceLocator, ComponentResourceLocation componentResourceLocation)
+   at StormRemoteControl.Views.MainWindow..ctor() in e:\STORM REMOTE CONTROL\StormRemoteControl\StormRemoteControl\Views\MainWindow.xaml.cs:line 28
+
+NO INNER
+=== APP UNHANDLED ===
+Microsoft.UI.Xaml.Markup.XamlParseException: XAML parsing failed.
+   at WinRT.ExceptionHelpers.<ThrowExceptionForHR>g__Throw|38_0(Int32 hr)
+   at ABI.Microsoft.UI.Xaml.IApplicationStaticsMethods.LoadComponent(IObjectReference _obj, Object component, Uri resourceLocator, ComponentResourceLocation componentResourceLocation)
+   at StormRemoteControl.Views.MainWindow..ctor() in e:\STORM REMOTE CONTROL\StormRemoteControl\StormRemoteControl\Views\MainWindow.xaml.cs:line 28
+   at StormRemoteControl.App.OnLaunched(LaunchActivatedEventArgs args) in e:\STORM REMOTE CONTROL\StormRemoteControl\StormRemoteControl\App.xaml.cs:line 44
+   at Microsoft.UI.Xaml.Application.Microsoft.UI.Xaml.IApplicationOverrides.OnLaunched(LaunchActivatedEventArgs args)
+   at ABI.Microsoft.UI.Xaml.IApplicationOverrides.Do_Abi_OnLaunched_0(IntPtr thisPtr, IntPtr args)

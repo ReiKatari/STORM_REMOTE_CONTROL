@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "StormRemoteControl (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "StormRemoteControl (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

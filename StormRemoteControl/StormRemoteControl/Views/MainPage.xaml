@@ -1,0 +1,215 @@
+<Page
+    x:Class="StormRemoteControl.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    RequestedTheme="Dark"
+    Background="{StaticResource DarkBgBrush}">
+
+    <Page.Resources>
+        <Storyboard x:Name="PulsingStoryboard" RepeatBehavior="Forever" AutoReverse="True">
+            <DoubleAnimation
+                Storyboard.TargetName="NetworkPulseDot"
+                Storyboard.TargetProperty="Opacity"
+                From="1.0" To="0.25"
+                Duration="0:0:1.0">
+                <DoubleAnimation.EasingFunction>
+                    <QuadraticEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </Page.Resources>
+
+    <Grid x:Name="RootLayout">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             CUSTOM TITLEBAR — STORM branding header
+             ═══════════════════════════════════════════════════════════ -->
+        <Grid x:Name="CustomTitleBar" Grid.Row="0" Padding="16,10,16,10" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Branding (left) -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
+                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEA80;" Foreground="{StaticResource AccentColorBrush}" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="STORM REMOTE CONTROL" FontFamily="Century Gothic" FontWeight="Bold" FontSize="15" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="0.6.1" FontFamily="Century Gothic" FontWeight="Bold" FontSize="11" Foreground="{ThemeResource AccentColorBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Network status (middle) -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <Border Width="1" Height="16" Background="{StaticResource BorderBrush}" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                <Grid VerticalAlignment="Center">
+                    <Ellipse x:Name="NetworkPulseDot" Fill="{StaticResource PulsingGreenBrush}" Width="8" Height="8"/>
+                    <Ellipse Stroke="{StaticResource PulsingGreenBrush}" StrokeThickness="1.5" Width="16" Height="16" Opacity="0.45"/>
+                </Grid>
+                <TextBlock x:Name="NetworkStatusText" Text="ИНИЦИАЛИЗАЦИЯ..." Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="{StaticResource PulsingGreenBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Drag region spacer -->
+            <Grid Grid.Column="2"/>
+
+            <!-- Settings + Info + File Manager buttons (right, before caption buttons) -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,140,0">
+                <Button x:Name="FileManagerButton" Padding="8,5,8,5" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" VerticalAlignment="Center" Click="OnFileManagerClicked" ToolTipService.ToolTip="Файловый менеджер">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8B7;" FontSize="13"/>
+                        <TextBlock Text="ФАЙЛЫ" FontSize="11"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="SettingsButton" Padding="8,5,8,5" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" VerticalAlignment="Center" Click="OnSettingsClicked" ToolTipService.ToolTip="Настройки">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE713;" FontSize="13"/>
+                        <TextBlock Text="НАСТРОЙКИ" FontSize="11"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="InfoButton" Padding="8,5,8,5" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" VerticalAlignment="Center" Click="OnInfoClicked" ToolTipService.ToolTip="Информация о технологиях">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;" FontSize="13"/>
+                        <TextBlock Text="ИНФОРМАЦИЯ" FontSize="11"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             MAIN WORKSPACE
+             ═══════════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20,24,24">
+            <StackPanel Spacing="24">
+
+                <!-- Split: Left (Host Mode with ID) & Right (Client Connect by ID) -->
+                <Grid x:Name="WorkspaceGrid" ColumnSpacing="20">
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup>
+                            <VisualState x:Name="WideState">
+                                <VisualState.StateTriggers>
+                                    <AdaptiveTrigger MinWindowWidth="750"/>
+                                </VisualState.StateTriggers>
+                            </VisualState>
+                            <VisualState x:Name="NarrowState">
+                                <VisualState.StateTriggers>
+                                    <AdaptiveTrigger MinWindowWidth="0"/>
+                                </VisualState.StateTriggers>
+                                <VisualState.Setters>
+                                    <Setter Target="RightColumn.Width" Value="0"/>
+                                    <Setter Target="BottomRow.Height" Value="Auto"/>
+                                    <Setter Target="WorkspaceGrid.ColumnSpacing" Value="0"/>
+                                    <Setter Target="RightPanel.(Grid.Column)" Value="0"/>
+                                    <Setter Target="RightPanel.(Grid.Row)" Value="1"/>
+                                    <Setter Target="RightPanel.Margin" Value="0,20,0,0"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition x:Name="RightColumn" Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition x:Name="BottomRow" Height="0"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Left: HOST MODE — Your Device ID -->
+                    <Border x:Name="LeftPanel" Grid.Column="0" Grid.Row="0" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="24" Opacity="0.95">
+                        <StackPanel Spacing="16" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                <TextBlock Text="ВАШ КОМПЬЮТЕР" Style="{StaticResource StormHeaderMediumStyle}" Foreground="{StaticResource AccentColorBrush}"/>
+                                <Border x:Name="HostStatusBadge" Background="#1A2E1A" CornerRadius="4" Padding="8,3,8,3" VerticalAlignment="Center">
+                                    <TextBlock x:Name="HostStatusText" Text="ГОТОВ" FontSize="10" Foreground="{StaticResource PulsingGreenBrush}"/>
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock Text="Ваш уникальный ID для подключения. Передайте его партнеру." 
+                                       Style="{StaticResource StormTextSubtleBoldStyle}" TextWrapping="WrapWholeWords" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                            <!-- Device ID display -->
+                            <Border Background="#121215" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20,14,20,14" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8EA;" Foreground="{StaticResource AccentColorBrush}" FontSize="24" VerticalAlignment="Center"/>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock x:Name="DeviceIdText" Text="..." FontFamily="Century Gothic" FontWeight="Bold" FontSize="32" Foreground="{ThemeResource TextFillColorPrimaryBrush}" CharacterSpacing="80"/>
+                                        <TextBlock Text="ВАШ ID" FontFamily="Century Gothic" FontWeight="Bold" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Password display (if set) -->
+                            <StackPanel x:Name="PasswordInfoPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed" HorizontalAlignment="Center">
+                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE72E;" Foreground="{StaticResource PulsingGreenBrush}" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="ЗАЩИЩЕНО ПАРОЛЕМ" Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="{StaticResource PulsingGreenBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0" HorizontalAlignment="Center">
+                                <Button Padding="12,8,12,8" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" Click="OnCopyIdClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8C8;" FontSize="13"/>
+                                        <TextBlock Text="КОПИРОВАТЬ ID" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Padding="12,8,12,8" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" Click="OnChangeIdClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE72C;" FontSize="13"/>
+                                        <TextBlock Text="СМЕНИТЬ ID" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Right: CLIENT MODE — Connect by ID -->
+                    <Border x:Name="RightPanel" Grid.Column="1" Grid.Row="0" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="24" Opacity="0.95">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="УДАЛЁННОЕ УПРАВЛЕНИЕ" Style="{StaticResource StormHeaderMediumStyle}"/>
+                            <TextBlock Text="Введите ID удалённого компьютера для подключения через зашифрованный P2P-канал." 
+                                       Style="{StaticResource StormTextSubtleBoldStyle}" TextWrapping="WrapWholeWords"/>
+
+                            <TextBox x:Name="PartnerIdTextBox" PlaceholderText="Введите ID партнера (Например, 847 291 063)" FontFamily="Century Gothic" FontWeight="Bold" FontSize="18" Padding="14,14,14,14" Background="#121215" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Stretch" CharacterSpacing="50"/>
+
+                            <PasswordBox x:Name="PartnerPasswordBox" PlaceholderText="Пароль (если установлен)" FontFamily="Century Gothic" FontWeight="Bold" FontSize="14" Padding="12,10,12,10" Background="#121215" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Stretch"/>
+
+                            <Button x:Name="ConnectButton" Click="OnConnectButtonClicked" FontFamily="Century Gothic" FontWeight="Bold" FontSize="16" Padding="24,14,24,14" Background="{StaticResource AccentColorBrush}" Foreground="White" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE71B;" FontSize="16" Foreground="White"/>
+                                    <TextBlock Text="ПОДКЛЮЧИТЬСЯ" FontSize="16" Foreground="White"/>
+                                </StackPanel>
+                                <Button.Resources>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF3D3D"/>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B71C1C"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
+                                </Button.Resources>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+
+
+                <!-- Recent Connections (Empty State) -->
+                <StackPanel Spacing="14">
+                    <TextBlock Text="НЕДАВНИЕ ПОДКЛЮЧЕНИЯ" Style="{StaticResource StormHeaderMediumStyle}" Margin="0,10,0,0"/>
+                    <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="40,32,40,32" HorizontalAlignment="Stretch">
+                        <StackPanel HorizontalAlignment="Center" Spacing="10">
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE774;" FontSize="36" Foreground="{StaticResource BorderBrush}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="НЕТ НЕДАВНИХ ПОДКЛЮЧЕНИЙ" Style="{StaticResource StormTextBoldStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="После первого успешного подключения оно отобразится здесь." Style="{StaticResource StormTextSubtleBoldStyle}" TextWrapping="WrapWholeWords" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="400"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

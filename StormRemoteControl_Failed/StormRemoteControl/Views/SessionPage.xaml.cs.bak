@@ -1,0 +1,246 @@
+using System;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using StormRemoteControl.Core;
+
+namespace StormRemoteControl.Views
+{
+    /// <summary>
+    /// Serves as the high-performance remote rendering viewport and session overlay manager.
+    /// Intercepts client key/mouse actions and serializes them to the P2P connection thread.
+    /// </summary>
+    public sealed partial class SessionPage : Page
+    {
+        private RemoteSessionService _sessionService;
+        private bool _isAudioMuted = false;
+        private bool _isChatOpen = false;
+
+        public SessionPage()
+        {
+            this.InitializeComponent();
+
+            // Wire up high-frequency pointer interceptors on the screen surface
+            RemoteDisplaySurface.PointerMoved += OnSurfacePointerMoved;
+            RemoteDisplaySurface.PointerPressed += OnSurfacePointerPressed;
+            RemoteDisplaySurface.PointerReleased += OnSurfacePointerReleased;
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (e.Parameter is RemoteSessionService service)
+            {
+                _sessionService = service;
+
+                // Subscribe to real-time P2P networking channels
+                _sessionService.MetricsUpdated += OnSessionMetricsUpdated;
+                _sessionService.StateChanged += OnSessionStateChanged;
+            }
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+
+            if (_sessionService != null)
+            {
+                _sessionService.MetricsUpdated -= OnSessionMetricsUpdated;
+                _sessionService.StateChanged -= OnSessionStateChanged;
+            }
+        }
+
+        /// <summary>
+        /// Updates the real-time telemetry dashboard in the top-left corner.
+        /// Dispatched to run safely on the UI thread.
+        /// </summary>
+        private void OnSessionMetricsUpdated(double latency, double bitrate, int fps)
+        {
+            this.DispatcherQueue.TryEnqueue(() =>
+            {
+                FpsTextBlock.Text = $"{fps} FPS";
+                LatencyTextBlock.Text = $"{latency:F1} MS";
+                BitrateTextBlock.Text = $"{bitrate:F1} MBPS";
+            });
+        }
+
+        private void OnSessionStateChanged(SessionState state)
+        {
+            if (state == SessionState.Disconnected)
+            {
+                this.DispatcherQueue.TryEnqueue(() =>
+                {
+                    this.Frame.Navigate(typeof(MainPage));
+                });
+            }
+        }
+
+        #region Viewport Input Capture & Injection
+
+        private async void OnSurfacePointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            var pointerPoint = e.GetCurrentPoint(RemoteDisplaySurface);
+            var width = RemoteDisplaySurface.ActualWidth;
+            var height = RemoteDisplaySurface.ActualHeight;
+
+            if (width > 0 && height > 0)
+            {
+                // Map local coordinates to normalized coordinates (0 to 65535) for remote display scale matching
+                int normX = (int)((pointerPoint.Position.X / width) * 65535);
+                int normY = (int)((pointerPoint.Position.Y / height) * 65535);
+
+                // Action Type: 0x01 = Mouse Move
+                await _sessionService.SendInputAsync(0x01, normX, normY, 0u);
+            }
+        }
+
+        private async void OnSurfacePointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var pointerPoint = e.GetCurrentPoint(RemoteDisplaySurface);
+            uint clickData = (uint)(pointerPoint.Properties.IsLeftButtonPressed ? 0x01 : 0x02);
+
+            // Action Type: 0x02 = Mouse Click Press
+            await _sessionService.SendInputAsync(0x02, 0, 0, clickData);
+        }
+
+        private async void OnSurfacePointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            // Action Type: 0x03 = Mouse Click Release
+            await _sessionService.SendInputAsync(0x03, 0, 0, 0u);
+        }
+
+        #endregion
+
+        #region Toolbar Quick Action Commands
+
+        private void OnSpeedModeSelected(object sender, RoutedEventArgs e)
+        {
+            _sessionService.ActiveProfile = QualityProfile.Speed;
+            QualityButton.Content = "КАЧЕСТВО: СКОРОСТЬ";
+        }
+
+        private void OnQualityModeSelected(object sender, RoutedEventArgs e)
+        {
+            _sessionService.ActiveProfile = QualityProfile.Quality;
+            QualityButton.Content = "КАЧЕСТВО: ВЫСОКОЕ";
+        }
+
+        private void OnAutoModeSelected(object sender, RoutedEventArgs e)
+        {
+            _sessionService.ActiveProfile = QualityProfile.Auto;
+            QualityButton.Content = "КАЧЕСТВО: АВТО";
+        }
+
+        private async void OnCtrlAltDelClick(object sender, RoutedEventArgs e)
+        {
+            // Inject Ctrl+Alt+Del signal
+            await _sessionService.SendInputAsync(0x04, 0, 0, 0x0015u);
+        }
+
+        private async void OnAltTabClick(object sender, RoutedEventArgs e)
+        {
+            // Inject Alt+Tab signal
+            await _sessionService.SendInputAsync(0x04, 0, 0, 0x0016u);
+        }
+
+        private async void OnWinKeyClick(object sender, RoutedEventArgs e)
+        {
+            // Inject Windows key signal
+            await _sessionService.SendInputAsync(0x04, 0, 0, 0x0017u);
+        }
+
+        private void OnAudioToggleClick(object sender, RoutedEventArgs e)
+        {
+            _isAudioMuted = !_isAudioMuted;
+            AudioButton.Content = _isAudioMuted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ";
+        }
+
+        private void OnMonitorSelected(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem item)
+            {
+                MonitorsButton.Content = $"МОНИТОР: {item.Text.ToUpper()}";
+            }
+        }
+
+        private void OnDisconnectClick(object sender, RoutedEventArgs e)
+        {
+            _sessionService.Disconnect();
+            this.Frame.Navigate(typeof(MainPage));
+        }
+
+        #endregion
+
+        #region Sidebar Chat Mechanics
+
+        private void OnChatToggleClick(object sender, RoutedEventArgs e)
+        {
+            _isChatOpen = !_isChatOpen;
+            
+            // Adjust panel width with instant visual updates, conforming to "Pulsing/sliding layout adjustments"
+            ChatColumn.Width = _isChatOpen ? new GridLength(320) : new GridLength(0);
+        }
+
+        private void OnSendMessageClick(object sender, RoutedEventArgs e)
+        {
+            TransmitChatMessage();
+        }
+
+        private void OnMessageInputKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                TransmitChatMessage();
+            }
+        }
+
+        private async void TransmitChatMessage()
+        {
+            string rawMsg = MessageInputBox.Text;
+            if (string.IsNullOrEmpty(rawMsg)) return;
+
+            // Dispatch message through low-latency channel
+            await _sessionService.SendChatMessageAsync(rawMsg);
+
+            // Add text bubble to panel
+            AppendChatBubble("ВЫ", rawMsg, true);
+            MessageInputBox.Text = "";
+        }
+
+        private void AppendChatBubble(string author, string text, bool isSelf)
+        {
+            var card = new Border
+            {
+                Background = isSelf ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(26, 211, 47, 47)) : new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(26, 25, 25, 32)),
+                Padding = new Thickness(10),
+                CornerRadius = new CornerRadius(6),
+                HorizontalAlignment = isSelf ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+                Margin = new Thickness(0, 0, 0, 8),
+                MaxWidth = 240
+            };
+
+            var stack = new StackPanel();
+            
+            stack.Children.Add(new TextBlock
+            {
+                Text = author.ToUpper(),
+                Style = (Style)Application.Current.Resources["StormTextSubtleBoldStyle"],
+                Foreground = isSelf ? (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources["AccentColorBrush"] : new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 10, 185, 129))
+            });
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = text,
+                Style = (Style)Application.Current.Resources["StormTextBoldStyle"],
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            card.Child = stack;
+            ChatMessagesStack.Children.Add(card);
+        }
+
+        #endregion
+    }
+}

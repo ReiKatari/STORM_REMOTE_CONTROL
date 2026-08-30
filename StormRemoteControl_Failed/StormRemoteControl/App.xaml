@@ -1,0 +1,92 @@
+<Application
+    x:Class="StormRemoteControl.App"
+    xmlns="http://schemas.microsoft.com/winfx/2000/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2000/xaml"
+    xmlns:local="using:StormRemoteControl">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Merged system dictionaries for Fluent Design elements -->
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Storm Crimson Accent Theme & Core Typography Settings -->
+            <SolidColorBrush x:Key="AccentColorBrush" Color="#D32F2F" />
+            <SolidColorBrush x:Key="DarkBgBrush" Color="#0B0B0D" />
+            <SolidColorBrush x:Key="CardBgBrush" Color="#18181C" />
+            <SolidColorBrush x:Key="BorderBrush" Color="#28282E" />
+            <SolidColorBrush x:Key="PulsingGreenBrush" Color="#10B981" />
+            
+            <!-- Standardized Century Gothic Font Family definition -->
+            <FontFamily x:Key="AppFontFamily">Century Gothic, Segoe UI, Arial</FontFamily>
+
+            <!-- Default TextBlock Style: Forces Century Gothic AND Bold weight globally -->
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <!-- Customized Text Styling Variants (all strictly Bold as mandated) -->
+            <Style x:Key="StormHeaderLargeStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="26" />
+                <Setter Property="Foreground" Value="{StaticResource AccentColorBrush}" />
+            </Style>
+
+            <Style x:Key="StormHeaderMediumStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <Style x:Key="StormTextBoldStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <Style x:Key="StormTextSubtleBoldStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <!-- Enforced styling overrides on all standard controls to match brand identity -->
+            <Style TargetType="Button">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="6" />
+            </Style>
+            
+            <Style TargetType="TextBox">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="6" />
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="6" />
+            </Style>
+
+            <Style TargetType="ListViewItem">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="4" />
+            </Style>
+
+            <Style TargetType="NavigationViewItem">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

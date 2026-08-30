@@ -1,0 +1,169 @@
+<Page
+    x:Class="StormRemoteControl.Views.SessionPage"
+    xmlns="http://schemas.microsoft.com/winfx/2000/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2000/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="#0A0A0C">
+
+    <Grid x:Name="RootGrid">
+        <!-- Split Layout: Main Viewport (Column 0) & Sliding Chat Sidebar (Column 1) -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="ChatColumn" Width="0"/> <!-- Initially hidden sidebar -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Remote Desktop Viewport Grid -->
+        <Grid Grid.Column="0" x:Name="ViewportGrid" Background="Black">
+            <!-- Simulated Remote Display Surface -->
+            <Image x:Name="RemoteDisplaySurface" 
+                   Stretch="Uniform" 
+                   HorizontalAlignment="Center" 
+                   VerticalAlignment="Center"/>
+
+            <!-- High-Fidelity Active Stream Overlay Stats (Top-Left) -->
+            <Border Background="#C0101014" 
+                    BorderBrush="{StaticResource BorderBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="6" 
+                    Padding="14,10,14,10" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top" 
+                    Margin="16,16,0,0"
+                    IsHitTestVisible="False">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="Buffer" Foreground="{StaticResource AccentColorBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="FpsTextBlock" Text="60 FPS" Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="World" Foreground="{StaticResource AccentColorBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="LatencyTextBlock" Text="1.4 ms" Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="ZeroBars" Foreground="{StaticResource AccentColorBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="BitrateTextBlock" Text="12.4 Mbps" Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- FLOATING OVERLAY TOOLBAR (Overlay Grid, Top-Center) -->
+            <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,12,0,0">
+                <!-- Floating Glassmorphic Container -->
+                <Border Background="#E5121216" 
+                        BorderBrush="{StaticResource BorderBrush}" 
+                        BorderThickness="1" 
+                        CornerRadius="8" 
+                        Padding="14,8,14,8"
+                        Opacity="0.95">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <!-- Quality Profile Menu Button -->
+                        <Button x:Name="QualityButton" Content="КАЧЕСТВО" Padding="12,6,12,6">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="СКОРОСТЬ (YUV 4:2:0)" Click="OnSpeedModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="КАЧЕСТВО (YUV 4:4:4)" Click="OnQualityModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="АВТОМАТИЧЕСКИЙ РЕЖИМ" Click="OnAutoModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+
+                        <!-- System Hotkeys Injector Menu -->
+                        <Button x:Name="HotkeysButton" Content="ГОРЯЧИЕ КЛАВИШИ" Padding="12,6,12,6">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Ctrl + Alt + Del" Click="OnCtrlAltDelClick" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Alt + Tab" Click="OnAltTabClick" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Win Key" Click="OnWinKeyClick" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+
+                        <!-- Audio Sync toggle -->
+                        <Button x:Name="AudioButton" Content="ЗВУК: ВКЛ" Click="OnAudioToggleClick" Padding="12,6,12,6"/>
+
+                        <!-- Monitors switch menu -->
+                        <Button x:Name="MonitorsButton" Content="МОНИТОРЫ" Padding="12,6,12,6">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="МОНИТОР 1 (ОСНОВНОЙ)" Click="OnMonitorSelected" Tag="1" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="МОНИТОР 2" Click="OnMonitorSelected" Tag="2" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="MULTI-WINDOW РЕЖИМ" Click="OnMonitorSelected" Tag="all" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+
+                        <!-- Toggle chat sidebar panel -->
+                        <Button x:Name="ChatToggleButton" Content="ЧАТ" Click="OnChatToggleClick" Padding="12,6,12,6"/>
+
+                        <!-- Divider bar -->
+                        <Border Width="1" Height="20" Background="{StaticResource BorderBrush}" Margin="4,0,4,0" VerticalAlignment="Center"/>
+
+                        <!-- Red Disconnect Button -->
+                        <Button x:Name="DisconnectButton" 
+                                Content="ЗАКРЫТЬ" 
+                                Click="OnDisconnectClick" 
+                                Background="{StaticResource AccentColorBrush}" 
+                                Foreground="White" 
+                                Padding="16,6,16,6">
+                            <Button.Resources>
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF3D3D"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B71C1C"/>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Sliding Sidebar Chat Panel (Column 1) -->
+        <Border Grid.Column="1" 
+                Background="{StaticResource CardBgBrush}" 
+                BorderBrush="{StaticResource BorderBrush}" 
+                BorderThickness="1,0,0,0">
+            <Grid Padding="16,20,16,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Title area -->
+                    <RowDefinition Height="*"/>    <!-- Messages Scroller -->
+                    <RowDefinition Height="Auto"/> <!-- Chat Input block -->
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="ЧАТ С КЛИЕНТОМ" Style="{StaticResource StormHeaderMediumStyle}" Margin="0,0,0,16"/>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16">
+                    <StackPanel x:Name="ChatMessagesStack" Spacing="8">
+                        <!-- Simulated active chat messages -->
+                        <Border Background="#1A1A20" Padding="10" CornerRadius="6" HorizontalAlignment="Left">
+                            <StackPanel>
+                                <TextBlock Text="ПАРТНЕР" Style="{StaticResource StormTextSubtleBoldStyle}" Foreground="{StaticResource AccentColorBrush}"/>
+                                <TextBlock Text="Соединение установлено. Жду начала сессии..." Style="{StaticResource StormTextBoldStyle}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Grid Grid.Row="2" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="MessageInputBox" 
+                             PlaceholderText="Сообщение..."
+                             KeyDown="OnMessageInputKeyDown"
+                             Grid.Column="0"
+                             FontFamily="Century Gothic"
+                             FontWeight="Bold"/>
+                             
+                    <Button Content="ОТПР." 
+                            Click="OnSendMessageClick"
+                            Grid.Column="1" 
+                            Background="{StaticResource AccentColorBrush}" 
+                            Foreground="White"
+                            Padding="12,6,12,6"/>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
