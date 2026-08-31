@@ -59,8 +59,8 @@ if "%SKIP_PUBLISH%"=="1" (
     )
 
     echo [INFO] Copying missing WinUI 3 resources to publish dir...
-    xcopy "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\*.xbf" "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\" /Y
-    xcopy "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\*.pri" "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\" /Y
+    xcopy "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\*.xbf" "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\" /Y /I
+    xcopy "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\*.pri" "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\" /Y /I
     xcopy "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\Assets\*.*" "%ROOT%StormRemoteControl\StormRemoteControl\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\Assets\" /E /Y /I
 
     echo.

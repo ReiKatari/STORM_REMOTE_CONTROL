@@ -41,7 +41,7 @@ DisableProgramGroupPage=yes
 
 ; Output
 OutputDir=E:\STORM REMOTE CONTROL\installer_output
-OutputBaseFilename=StormRemoteControl_Setup_{#MyAppVersion}
+OutputBaseFilename=STORM_REMOTE_CONTROL_{#MyAppVersion}_Setup
 SetupIconFile={#AppIcon}
 UninstallDisplayIcon={app}\StormRemoteControl.exe
 UninstallDisplayName={#MyAppName}
