@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="#0A0A0C">
+    Background="{StaticResource DarkBgBrush}">
 
     <Grid x:Name="RootGrid">
         <Grid.ColumnDefinitions>
@@ -42,17 +42,17 @@
             <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,12,0,0">
                 <Border Background="#E5121216" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,8,14,8" Opacity="0.95">
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button x:Name="QualityButton" Content="КАЧЕСТВО" Padding="12,6,12,6">
+                        <Button x:Name="QualityButton" Content="Качество" Padding="12,6,12,6">
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="СКОРОСТЬ (1280×720, Q40)" Click="OnSpeedModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
-                                    <MenuFlyoutItem Text="КАЧЕСТВО (NATIVE, Q85)" Click="OnQualityModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
-                                    <MenuFlyoutItem Text="АВТОМАТИЧЕСКИЙ РЕЖИМ" Click="OnAutoModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Скорость (1280×720, Q40)" Click="OnSpeedModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Качество (Native, Q85)" Click="OnQualityModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Автоматический режим" Click="OnAutoModeSelected" FontFamily="Century Gothic" FontWeight="Bold"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>
 
-                        <Button x:Name="HotkeysButton" Content="ГОРЯЧИЕ КЛАВИШИ" Padding="12,6,12,6">
+                        <Button x:Name="HotkeysButton" Content="Горячие клавиши" Padding="12,6,12,6">
                             <Button.Flyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Ctrl + Alt + Del" Click="OnCtrlAltDelClick" FontFamily="Century Gothic" FontWeight="Bold"/>
@@ -62,24 +62,24 @@
                             </Button.Flyout>
                         </Button>
 
-                        <Button x:Name="AudioButton" Content="ЗВУК: ВКЛ" Click="OnAudioToggleClick" Padding="12,6,12,6"/>
+                        <Button x:Name="AudioButton" Content="Звук: вкл" Click="OnAudioToggleClick" Padding="12,6,12,6"/>
 
-                        <Button x:Name="FileTransferButton" Content="ФАЙЛЫ" Click="OnFileTransferClick" Padding="12,6,12,6">
+                        <Button x:Name="FileTransferButton" Content="Файлы" Click="OnFileTransferClick" Padding="12,6,12,6">
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="ОТПРАВИТЬ ФАЙЛ..." Click="OnSendFileClick" FontFamily="Century Gothic" FontWeight="Bold"/>
+                                    <MenuFlyoutItem Text="Отправить файл..." Click="OnSendFileClick" FontFamily="Century Gothic" FontWeight="Bold"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>
 
-                        <Button x:Name="ChatToggleButton" Content="ЧАТ" Click="OnChatToggleClick" Padding="12,6,12,6"/>
+                        <Button x:Name="ChatToggleButton" Content="Чат" Click="OnChatToggleClick" Padding="12,6,12,6"/>
 
                         <Border Width="1" Height="20" Background="{StaticResource BorderBrush}" Margin="4,0,4,0" VerticalAlignment="Center"/>
 
-                        <Button x:Name="DisconnectButton" Content="ЗАКРЫТЬ" Click="OnDisconnectClick" Background="{StaticResource AccentColorBrush}" Foreground="White" Padding="16,6,16,6">
+                        <Button x:Name="DisconnectButton" Content="Закрыть" Click="OnDisconnectClick" Background="{StaticResource AccentColorBrush}" Foreground="Black" Padding="16,6,16,6">
                             <Button.Resources>
-                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF3D3D"/>
-                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B71C1C"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF007F"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#D4AF37"/>
                             </Button.Resources>
                         </Button>
                     </StackPanel>
@@ -108,7 +108,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="ЗАЩИЩЁННЫЙ ЧАТ" Style="{StaticResource StormHeaderMediumStyle}" Margin="0,0,0,16"/>
+                <TextBlock x:Name="ChatHeaderTitle" Grid.Row="0" Text="Защищённый чат" Style="{StaticResource StormHeaderMediumStyle}" Margin="0,0,0,16"/>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16">
                     <StackPanel x:Name="ChatMessagesStack" Spacing="8"/>
@@ -120,7 +120,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="MessageInputBox" PlaceholderText="Сообщение..." KeyDown="OnMessageInputKeyDown" Grid.Column="0" FontFamily="Century Gothic" FontWeight="Bold"/>
-                    <Button Content="ОТПР." Click="OnSendMessageClick" Grid.Column="1" Background="{StaticResource AccentColorBrush}" Foreground="White" Padding="12,6,12,6"/>
+                    <Button x:Name="SendMessageButton" Content="Отпр." Click="OnSendMessageClick" Grid.Column="1" Background="{StaticResource AccentColorBrush}" Foreground="Black" Padding="12,6,12,6"/>
                 </Grid>
             </Grid>
         </Border>

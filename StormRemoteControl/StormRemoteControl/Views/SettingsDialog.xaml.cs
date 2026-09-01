@@ -3,72 +3,56 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using StormRemoteControl.Models;
+using StormRemoteControl.Services;
 using Windows.UI;
 
 namespace StormRemoteControl.Views
 {
     /// <summary>
     /// Premium settings dialog for STORM REMOTE CONTROL.
-    /// Built entirely in code-behind — no companion .xaml file required.
-    /// Sections: Connection, Video, Security, About.
+    /// Supports 8 visual themes, 6 language options, connection, video and security settings.
     /// </summary>
     public sealed class SettingsDialog : ContentDialog
     {
-        // ── Design tokens ────────────────────────────────────────────────
-
-        private static readonly SolidColorBrush CardBg       = new(ColorHelper.FromArgb(255, 24, 24, 28));   // #18181C
-        private static readonly SolidColorBrush BorderColor   = new(ColorHelper.FromArgb(255, 40, 40, 46));   // #28282E
-        private static readonly SolidColorBrush AccentBrush   = new(ColorHelper.FromArgb(255, 211, 47, 47));  // #D32F2F
-        private static readonly SolidColorBrush SubtleText    = new(ColorHelper.FromArgb(180, 255, 255, 255));
-        private static readonly SolidColorBrush DimText       = new(ColorHelper.FromArgb(100, 255, 255, 255));
-        private static readonly SolidColorBrush GreenBrush    = new(ColorHelper.FromArgb(255, 16, 185, 129)); // #10B981
-        private static readonly FontFamily      AppFont       = new("Century Gothic, Segoe UI, Arial");
-        private const double SectionSpacing   = 24;
-        private const double ItemSpacing      = 14;
-        private const double CardPadding      = 20;
+        private static readonly FontFamily AppFont = new("Century Gothic, Segoe UI, Arial");
+        private const double SectionSpacing = 20;
+        private const double ItemSpacing = 12;
+        private const double CardPadding = 18;
         private const double CardCornerRadius = 10;
 
-        // ── Controls we need to read back ────────────────────────────────
+        // ── Controls we read back ────────────────────────────────────────
 
-        private ComboBox    _profileCombo      = null!;
-        private TextBox     _portTextBox       = null!;
-        private PasswordBox _passwordBox       = null!;
-        private TextBox     _signalingUrlTextBox = null!;
-        private ComboBox    _fpsCombo          = null!;
-        private ComboBox    _resolutionCombo   = null!;
-        private ComboBox    _monitorCombo      = null!;
-        private ToggleSwitch _confirmToggle    = null!;
-
-        // ── Constructor ──────────────────────────────────────────────────
+        private ComboBox _languageCombo = null!;
+        private ComboBox _themeCombo = null!;
+        private ComboBox _profileCombo = null!;
+        private TextBox _portTextBox = null!;
+        private PasswordBox _passwordBox = null!;
+        private TextBox _signalingUrlTextBox = null!;
+        private ComboBox _fpsCombo = null!;
+        private ComboBox _resolutionCombo = null!;
+        private ComboBox _monitorCombo = null!;
+        private ToggleSwitch _confirmToggle = null!;
 
         public SettingsDialog()
         {
-            // Dialog chrome
-            Title                = BuildDialogTitle();
-            PrimaryButtonText    = "СОХРАНИТЬ";
-            CloseButtonText      = "ОТМЕНА";
-            DefaultButton        = ContentDialogButton.Primary;
-            RequestedTheme       = ElementTheme.Dark;
+            Title = BuildDialogTitle();
+            PrimaryButtonText = LocalizationService.Get("Save");
+            CloseButtonText = LocalizationService.Get("Cancel");
+            DefaultButton = ContentDialogButton.Primary;
+            RequestedTheme = ElementTheme.Dark;
 
-            // Apply app font to button text
             Resources["ContentDialogButtonFontFamily"] = AppFont;
 
-            // Build content
             Content = BuildContent();
-
-            // Wire save
             PrimaryButtonClick += OnSaveClicked;
         }
-
-        // ── Dialog title with STORM branding ─────────────────────────────
 
         private static StackPanel BuildDialogTitle()
         {
@@ -80,30 +64,29 @@ namespace StormRemoteControl.Views
 
             panel.Children.Add(new FontIcon
             {
-                Glyph      = "\uE713",  // Settings gear
-                FontSize   = 20,
-                Foreground = AccentBrush
+                Glyph = "\uE713",
+                FontSize = 20,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
             });
 
             panel.Children.Add(new TextBlock
             {
-                Text         = "НАСТРОЙКИ",
-                FontFamily   = AppFont,
-                FontWeight   = FontWeights.Bold,
-                FontSize     = 20,
-                Foreground   = AccentBrush,
+                Text = LocalizationService.Get("SettingsTitle"),
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                FontSize = 19,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"],
                 VerticalAlignment = VerticalAlignment.Center
             });
 
             return panel;
         }
 
-        // ── Main content builder ─────────────────────────────────────────
-
         private ScrollViewer BuildContent()
         {
-            var root = new StackPanel { Spacing = SectionSpacing, Width = 440 };
+            var root = new StackPanel { Spacing = SectionSpacing, Width = 480 };
 
+            root.Children.Add(BuildAppearanceSection());
             root.Children.Add(BuildConnectionSection());
             root.Children.Add(BuildVideoSection());
             root.Children.Add(BuildSecuritySection());
@@ -111,16 +94,102 @@ namespace StormRemoteControl.Views
 
             return new ScrollViewer
             {
-                Content              = root,
-                VerticalScrollBarVisibility   = ScrollBarVisibility.Auto,
+                Content = root,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                MaxHeight            = 580,
-                Padding              = new Thickness(0, 4, 12, 0)
+                MaxHeight = 600,
+                Padding = new Thickness(0, 4, 12, 0)
             };
         }
 
         // ══════════════════════════════════════════════════════════════════
-        //  Section 1 — ПОДКЛЮЧЕНИЕ (Connection)
+        //  Section 1 — ОФОРМЛЕНИЕ И ЯЗЫК (Appearance & Language)
+        // ══════════════════════════════════════════════════════════════════
+
+        private Border BuildAppearanceSection()
+        {
+            var stack = new StackPanel { Spacing = ItemSpacing };
+
+            // — Visual Theme Selector
+            _themeCombo = new ComboBox
+            {
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            foreach (var kv in ThemeManager.Themes)
+            {
+                _themeCombo.Items.Add($"{kv.Value.Name} — {kv.Value.Description}");
+            }
+
+            int themeIdx = 0;
+            int curIdx = 0;
+            foreach (var key in ThemeManager.Themes.Keys)
+            {
+                if (key == ThemeManager.CurrentTheme) { themeIdx = curIdx; break; }
+                curIdx++;
+            }
+            _themeCombo.SelectedIndex = themeIdx;
+
+            _themeCombo.SelectionChanged += (s, e) =>
+            {
+                if (_themeCombo.SelectedIndex >= 0)
+                {
+                    int i = 0;
+                    foreach (var key in ThemeManager.Themes.Keys)
+                    {
+                        if (i == _themeCombo.SelectedIndex)
+                        {
+                            ThemeManager.ApplyTheme(key);
+                            break;
+                        }
+                        i++;
+                    }
+                }
+            };
+
+            stack.Children.Add(MakeField(LocalizationService.Get("AppTheme"), _themeCombo));
+
+            // — Language Selector
+            _languageCombo = new ComboBox
+            {
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            int langIdx = 0;
+            int idx = 0;
+            foreach (var kv in LocalizationService.SupportedLanguages)
+            {
+                _languageCombo.Items.Add($"{kv.Value.Flag}  {kv.Value.NativeName} ({kv.Value.Name})");
+                if (kv.Key == LocalizationService.CurrentLanguage) langIdx = idx;
+                idx++;
+            }
+            _languageCombo.SelectedIndex = langIdx;
+
+            _languageCombo.SelectionChanged += (s, e) =>
+            {
+                int i = 0;
+                foreach (var key in LocalizationService.SupportedLanguages.Keys)
+                {
+                    if (i == _languageCombo.SelectedIndex)
+                    {
+                        LocalizationService.CurrentLanguage = key;
+                        break;
+                    }
+                    i++;
+                }
+            };
+
+            stack.Children.Add(MakeField(LocalizationService.Get("AppLanguage"), _languageCombo));
+
+            return WrapInCard("\uE771", LocalizationService.Get("SectionAppearance"), stack);
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  Section 2 — ПОДКЛЮЧЕНИЕ (Connection)
         // ══════════════════════════════════════════════════════════════════
 
         private Border BuildConnectionSection()
@@ -130,54 +199,54 @@ namespace StormRemoteControl.Views
             // — Profile
             _profileCombo = new ComboBox
             {
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
-            _profileCombo.Items.Add("Производительность");
-            _profileCombo.Items.Add("Баланс");
-            _profileCombo.Items.Add("Качество");
+            _profileCombo.Items.Add(LocalizationService.Get("ProfilePerf"));
+            _profileCombo.Items.Add(LocalizationService.Get("ProfileBalance"));
+            _profileCombo.Items.Add(LocalizationService.Get("ProfileQuality"));
             _profileCombo.SelectedItem = AppSettings.ConnectionProfile;
             if (_profileCombo.SelectedIndex < 0) _profileCombo.SelectedIndex = 1;
 
-            stack.Children.Add(MakeField("ПРОФИЛЬ ПОДКЛЮЧЕНИЯ", _profileCombo));
+            stack.Children.Add(MakeField(LocalizationService.Get("ConnectionProfile"), _profileCombo));
 
             // — Port
             _portTextBox = new TextBox
             {
-                Text              = AppSettings.Port.ToString(),
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
-                PlaceholderText   = "17700",
-                MaxLength         = 5
+                Text = AppSettings.Port.ToString(),
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                PlaceholderText = "17700",
+                MaxLength = 5
             };
-            stack.Children.Add(MakeField("ПОРТ", _portTextBox));
+            stack.Children.Add(MakeField(LocalizationService.Get("Port"), _portTextBox));
 
             // — Password
             _passwordBox = new PasswordBox
             {
-                Password          = AppSettings.ConnectionPassword,
-                FontFamily        = AppFont,
-                PlaceholderText   = "НЕ ЗАДАН",
+                Password = AppSettings.ConnectionPassword,
+                FontFamily = AppFont,
+                PlaceholderText = LocalizationService.Get("PasswordNotSet"),
                 PasswordRevealMode = PasswordRevealMode.Peek
             };
-            stack.Children.Add(MakeField("ПАРОЛЬ ПОДКЛЮЧЕНИЯ", _passwordBox));
+            stack.Children.Add(MakeField(LocalizationService.Get("ConnectionPassword"), _passwordBox));
 
             // — Signaling URL
             _signalingUrlTextBox = new TextBox
             {
-                Text              = AppSettings.SignalingUrl,
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
-                PlaceholderText   = "wss://storm-signal-prod.loca.lt/ws"
+                Text = AppSettings.SignalingUrl,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                PlaceholderText = "wss://storm-signal-prod.loca.lt/ws"
             };
-            stack.Children.Add(MakeField("АДРЕС СИГНАЛЬНОГО СЕРВЕРА", _signalingUrlTextBox));
+            stack.Children.Add(MakeField(LocalizationService.Get("SignalingUrl"), _signalingUrlTextBox));
 
-            return WrapInCard("\uE8AF", "ПОДКЛЮЧЕНИЕ", stack);
+            return WrapInCard("\uE8AF", LocalizationService.Get("SectionConnection"), stack);
         }
 
         // ══════════════════════════════════════════════════════════════════
-        //  Section 2 — ВИДЕО (Video)
+        //  Section 3 — ВИДЕО (Video)
         // ══════════════════════════════════════════════════════════════════
 
         private Border BuildVideoSection()
@@ -187,8 +256,8 @@ namespace StormRemoteControl.Views
             // — Monitor selector
             _monitorCombo = new ComboBox
             {
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
             var monitors = EnumerateMonitors();
@@ -196,7 +265,7 @@ namespace StormRemoteControl.Views
             {
                 var m = monitors[i];
                 string label = $"Монитор {i + 1}: {m.Width}x{m.Height}";
-                if (m.IsPrimary) label += " (ОСНОВНОЙ)";
+                if (m.IsPrimary) label += $" {LocalizationService.Get("MonitorPrimary")}";
                 _monitorCombo.Items.Add(label);
             }
             if (_monitorCombo.Items.Count == 0)
@@ -204,13 +273,13 @@ namespace StormRemoteControl.Views
             int savedIdx = AppSettings.SelectedMonitor;
             _monitorCombo.SelectedIndex = savedIdx < _monitorCombo.Items.Count ? savedIdx : 0;
 
-            stack.Children.Add(MakeField("МОНИТОР ДЛЯ ЗАХВАТА", _monitorCombo));
+            stack.Children.Add(MakeField(LocalizationService.Get("CaptureMonitor"), _monitorCombo));
 
             // — Max FPS
             _fpsCombo = new ComboBox
             {
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
             _fpsCombo.Items.Add("15");
@@ -222,16 +291,16 @@ namespace StormRemoteControl.Views
             _fpsCombo.SelectedItem = AppSettings.MaxFps.ToString();
             if (_fpsCombo.SelectedIndex < 0) _fpsCombo.SelectedIndex = 1;
 
-            stack.Children.Add(MakeField("МАКС. FPS", _fpsCombo));
+            stack.Children.Add(MakeField(LocalizationService.Get("MaxFps"), _fpsCombo));
 
             // — Max Resolution
             _resolutionCombo = new ComboBox
             {
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
-            _resolutionCombo.Items.Add("Нативное");
+            _resolutionCombo.Items.Add(LocalizationService.Get("ResNative"));
             _resolutionCombo.Items.Add("3840x2160 (4K)");
             _resolutionCombo.Items.Add("2560x1440 (2K)");
             _resolutionCombo.Items.Add("1920x1200 (WUXGA)");
@@ -241,7 +310,7 @@ namespace StormRemoteControl.Views
             _resolutionCombo.Items.Add("1280x720 (HD)");
             _resolutionCombo.Items.Add("960x540 (qHD)");
             _resolutionCombo.SelectedItem = AppSettings.MaxResolution;
-            // Fallback: try matching just the resolution part
+
             if (_resolutionCombo.SelectedIndex < 0)
             {
                 for (int i = 0; i < _resolutionCombo.Items.Count; i++)
@@ -255,13 +324,13 @@ namespace StormRemoteControl.Views
             }
             if (_resolutionCombo.SelectedIndex < 0) _resolutionCombo.SelectedIndex = 0;
 
-            stack.Children.Add(MakeField("МАКС. РАЗРЕШЕНИЕ", _resolutionCombo));
+            stack.Children.Add(MakeField(LocalizationService.Get("MaxResolution"), _resolutionCombo));
 
-            return WrapInCard("\uE714", "ВИДЕО", stack);
+            return WrapInCard("\uE714", LocalizationService.Get("SectionVideo"), stack);
         }
 
         // ══════════════════════════════════════════════════════════════════
-        //  Section 3 — БЕЗОПАСНОСТЬ (Security)
+        //  Section 4 — БЕЗОПАСНОСТЬ (Security)
         // ══════════════════════════════════════════════════════════════════
 
         private Border BuildSecuritySection()
@@ -271,98 +340,93 @@ namespace StormRemoteControl.Views
             // — Encryption (always on, read-only)
             var encryptionToggle = new ToggleSwitch
             {
-                IsOn       = true,
-                IsEnabled  = false,
-                OnContent  = MakeToggleLabel("AES-256-GCM"),
-                OffContent = MakeToggleLabel("ВЫКЛ")
+                IsOn = true,
+                IsEnabled = false,
+                OnContent = MakeToggleLabel("AES-256-GCM"),
+                OffContent = MakeToggleLabel(LocalizationService.Get("ToggleOff"))
             };
-            stack.Children.Add(MakeToggleRow("ШИФРОВАНИЕ", encryptionToggle));
+            stack.Children.Add(MakeToggleRow(LocalizationService.Get("Encryption"), encryptionToggle));
 
             // — Confirm before accepting
             _confirmToggle = new ToggleSwitch
             {
-                IsOn       = AppSettings.RequireConfirmation,
-                OnContent  = MakeToggleLabel("ВКЛ"),
-                OffContent = MakeToggleLabel("ВЫКЛ")
+                IsOn = AppSettings.RequireConfirmation,
+                OnContent = MakeToggleLabel(LocalizationService.Get("ToggleOn")),
+                OffContent = MakeToggleLabel(LocalizationService.Get("ToggleOff"))
             };
-            stack.Children.Add(MakeToggleRow("ПОДТВЕРЖДЕНИЕ ПОДКЛЮЧЕНИЯ", _confirmToggle));
+            stack.Children.Add(MakeToggleRow(LocalizationService.Get("RequireConfirmation"), _confirmToggle));
 
-            return WrapInCard("\uE72E", "БЕЗОПАСНОСТЬ", stack);
+            return WrapInCard("\uE72E", LocalizationService.Get("SectionSecurity"), stack);
         }
 
         // ══════════════════════════════════════════════════════════════════
-        //  Section 4 — О ПРОГРАММЕ (About)
+        //  Section 5 — О ПРОГРАММЕ (About)
         // ══════════════════════════════════════════════════════════════════
 
         private Border BuildAboutSection()
         {
             var stack = new StackPanel { Spacing = 8 };
 
-            // App name
             stack.Children.Add(new TextBlock
             {
-                Text       = "STORM REMOTE CONTROL",
+                Text = "STORM REMOTE CONTROL",
                 FontFamily = AppFont,
                 FontWeight = FontWeights.Bold,
-                FontSize   = 16,
-                Foreground = AccentBrush
+                FontSize = 15,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
             });
 
-            // Version
-            string version = "0.6.1";
             stack.Children.Add(new TextBlock
             {
-                Text       = $"ВЕРСИЯ {version}",
+                Text = $"Версия 1.0.0",
                 FontFamily = AppFont,
                 FontWeight = FontWeights.Bold,
-                FontSize   = 12,
-                Foreground = SubtleText
+                FontSize = 12,
+                Foreground = (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"]
             });
 
-            // Build info
-            string buildDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
-            string arch = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString();
+            string buildDate = LocalizationService.FormatDate(DateTime.Now);
+            string arch = RuntimeInformation.OSArchitecture.ToString();
             stack.Children.Add(new TextBlock
             {
-                Text       = $"BUILD {buildDate} • {arch} • .NET {Environment.Version}",
+                Text = $"Сборка от {buildDate} • {arch} • .NET 10 / WinUI 3",
                 FontFamily = AppFont,
                 FontWeight = FontWeights.Bold,
-                FontSize   = 11,
-                Foreground = DimText
+                FontSize = 11,
+                Foreground = (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"]
             });
 
-            // Device ID
             AppSettings.InitializeDeviceId();
             stack.Children.Add(new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing     = 6,
-                Margin      = new Thickness(0, 6, 0, 0),
-                Children    =
+                Spacing = 6,
+                Margin = new Thickness(0, 6, 0, 0),
+                Children =
                 {
                     new TextBlock
                     {
-                        Text       = "ID:",
+                        Text = "ID:",
                         FontFamily = AppFont,
                         FontWeight = FontWeights.Bold,
-                        FontSize   = 12,
-                        Foreground = DimText,
+                        FontSize = 12,
+                        Foreground = (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"],
                         VerticalAlignment = VerticalAlignment.Center
                     },
                     new TextBlock
                     {
-                        Text       = AppSettings.DeviceId,
+                        Text = AppSettings.DeviceId,
                         FontFamily = AppFont,
                         FontWeight = FontWeights.Bold,
-                        FontSize   = 13,
-                        Foreground = GreenBrush,
+                        FontSize = 13,
+                        Foreground = (SolidColorBrush)Application.Current.Resources["PulsingGreenBrush"],
                         VerticalAlignment = VerticalAlignment.Center,
                         IsTextSelectionEnabled = true
                     }
                 }
             });
 
-            return WrapInCard("\uE946", "О ПРОГРАММЕ", stack);
+            return WrapInCard("\uE946", LocalizationService.Get("SectionAbout"), stack);
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -371,43 +435,61 @@ namespace StormRemoteControl.Views
 
         private void OnSaveClicked(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            // Profile
             if (_profileCombo.SelectedItem is string profile)
             {
                 AppSettings.ConnectionProfile = profile;
             }
 
-            // Port
             if (int.TryParse(_portTextBox.Text, out int port) && port > 0 && port <= 65535)
             {
                 AppSettings.Port = port;
             }
 
-            // Password
             AppSettings.ConnectionPassword = _passwordBox.Password ?? "";
-
-            // Signaling URL
             AppSettings.SignalingUrl = _signalingUrlTextBox.Text;
 
-            // FPS
             if (_fpsCombo.SelectedItem is string fpsStr && int.TryParse(fpsStr, out int fps))
             {
                 AppSettings.MaxFps = fps;
             }
 
-            // Resolution
             if (_resolutionCombo.SelectedItem is string res)
             {
                 AppSettings.MaxResolution = res;
             }
 
-            // Monitor
             AppSettings.SelectedMonitor = _monitorCombo.SelectedIndex;
-
-            // Confirmation toggle
             AppSettings.RequireConfirmation = _confirmToggle.IsOn;
 
-            // Persist to disk
+            // Save Theme and Language
+            if (_themeCombo.SelectedIndex >= 0)
+            {
+                int i = 0;
+                foreach (var key in ThemeManager.Themes.Keys)
+                {
+                    if (i == _themeCombo.SelectedIndex)
+                    {
+                        ThemeManager.CurrentTheme = key;
+                        break;
+                    }
+                    i++;
+                }
+            }
+
+            if (_languageCombo.SelectedIndex >= 0)
+            {
+                int i = 0;
+                foreach (var key in LocalizationService.SupportedLanguages.Keys)
+                {
+                    if (i == _languageCombo.SelectedIndex)
+                    {
+                        LocalizationService.CurrentLanguage = key;
+                        break;
+                    }
+                    i++;
+                }
+            }
+
             AppSettings.Save();
         }
 
@@ -415,30 +497,29 @@ namespace StormRemoteControl.Views
         //  UI helper methods
         // ══════════════════════════════════════════════════════════════════
 
-        /// <summary>Wraps a section body in a dark card with icon + title header.</summary>
-        private Border WrapInCard(string iconGlyph, string title, StackPanel body)
+        private static Border WrapInCard(string iconGlyph, string title, StackPanel body)
         {
             var header = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing     = 8,
-                Margin      = new Thickness(0, 0, 0, 12)
+                Spacing = 8,
+                Margin = new Thickness(0, 0, 0, 12)
             };
 
             header.Children.Add(new FontIcon
             {
-                Glyph      = iconGlyph,
-                FontSize   = 14,
-                Foreground = AccentBrush
+                Glyph = iconGlyph,
+                FontSize = 14,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
             });
 
             header.Children.Add(new TextBlock
             {
-                Text       = title,
+                Text = title,
                 FontFamily = AppFont,
                 FontWeight = FontWeights.Bold,
-                FontSize   = 13,
-                Foreground = AccentBrush,
+                FontSize = 13,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"],
                 VerticalAlignment = VerticalAlignment.Center
             });
 
@@ -448,16 +529,15 @@ namespace StormRemoteControl.Views
 
             return new Border
             {
-                Background   = CardBg,
-                BorderBrush  = BorderColor,
+                Background = (SolidColorBrush)Application.Current.Resources["CardBgBrush"],
+                BorderBrush = (SolidColorBrush)Application.Current.Resources["BorderBrush"],
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(CardCornerRadius),
-                Padding      = new Thickness(CardPadding),
-                Child        = wrapper
+                Padding = new Thickness(CardPadding),
+                Child = wrapper
             };
         }
 
-        /// <summary>Creates a labelled field (label + control stacked vertically).</summary>
         private static StackPanel MakeField(string label, UIElement control)
         {
             return new StackPanel
@@ -467,18 +547,17 @@ namespace StormRemoteControl.Views
                 {
                     new TextBlock
                     {
-                        Text       = label,
+                        Text = label,
                         FontFamily = AppFont,
                         FontWeight = FontWeights.Bold,
-                        FontSize   = 11,
-                        Foreground = SubtleText
+                        FontSize = 11,
+                        Foreground = (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"]
                     },
                     control
                 }
             };
         }
 
-        /// <summary>Creates a horizontal row with label on the left and toggle on the right.</summary>
         private static Grid MakeToggleRow(string label, ToggleSwitch toggle)
         {
             var grid = new Grid();
@@ -487,13 +566,13 @@ namespace StormRemoteControl.Views
 
             var labelBlock = new TextBlock
             {
-                Text              = label,
-                FontFamily        = AppFont,
-                FontWeight        = FontWeights.Bold,
-                FontSize          = 12,
-                Foreground        = SubtleText,
+                Text = label,
+                FontFamily = AppFont,
+                FontWeight = FontWeights.Bold,
+                FontSize = 12,
+                Foreground = (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"],
                 VerticalAlignment = VerticalAlignment.Center,
-                TextWrapping      = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap
             };
 
             Grid.SetColumn(labelBlock, 0);
@@ -505,28 +584,22 @@ namespace StormRemoteControl.Views
             return grid;
         }
 
-        /// <summary>Creates a styled text label for ToggleSwitch on/off content.</summary>
         private static TextBlock MakeToggleLabel(string text)
         {
             return new TextBlock
             {
-                Text       = text,
+                Text = text,
                 FontFamily = AppFont,
                 FontWeight = FontWeights.Bold,
-                FontSize   = 11
+                FontSize = 11
             };
         }
-
-        // ══════════════════════════════════════════════════════════════════
-        //  Monitor enumeration via Win32 P/Invoke
-        // ══════════════════════════════════════════════════════════════════
 
         private record MonitorInfo(int Width, int Height, bool IsPrimary, string DeviceName);
 
         private static List<MonitorInfo> EnumerateMonitors()
         {
             var monitors = new List<MonitorInfo>();
-
             try
             {
                 EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero,
@@ -538,18 +611,14 @@ namespace StormRemoteControl.Views
                         {
                             int w = mi.rcMonitor.Right - mi.rcMonitor.Left;
                             int h = mi.rcMonitor.Bottom - mi.rcMonitor.Top;
-                            bool primary = (mi.dwFlags & 1) != 0; // MONITORINFOF_PRIMARY
+                            bool primary = (mi.dwFlags & 1) != 0;
                             monitors.Add(new MonitorInfo(w, h, primary, mi.szDevice ?? ""));
                         }
                         return true;
                     }, IntPtr.Zero);
             }
-            catch
-            {
-                // Fallback if enumeration fails
-            }
+            catch { }
 
-            // Sort: primary first
             monitors.Sort((a, b) => b.IsPrimary.CompareTo(a.IsPrimary));
             return monitors;
         }

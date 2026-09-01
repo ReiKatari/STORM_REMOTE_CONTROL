@@ -6,20 +6,22 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Include standard WinUI controls resources -->
+                <!-- Standard WinUI Controls Resources -->
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Storm Crimson Accent Theme & Core Font Family Definition -->
-            <SolidColorBrush x:Key="AccentColorBrush" Color="#D32F2F" />
-            <SolidColorBrush x:Key="DarkBgBrush" Color="#0B0B0D" />
-            <SolidColorBrush x:Key="CardBgBrush" Color="#18181C" />
-            <SolidColorBrush x:Key="BorderBrush" Color="#28282E" />
+            <!-- ═══════════════════════════════════════════════════════════
+                 STORM SOFT — 8 THEMES BASE PALETTE (Default: STORM DARK)
+                 ═══════════════════════════════════════════════════════════ -->
+            <SolidColorBrush x:Key="AccentColorBrush" Color="#00D2FF" />
+            <SolidColorBrush x:Key="DarkBgBrush" Color="#0B0E14" />
+            <SolidColorBrush x:Key="CardBgBrush" Color="#151B26" />
+            <SolidColorBrush x:Key="BorderBrush" Color="#243044" />
             <SolidColorBrush x:Key="PulsingGreenBrush" Color="#10B981" />
             
             <FontFamily x:Key="AppFontFamily">Century Gothic, Segoe UI, Arial</FontFamily>
 
-            <!-- Default TextBlock Style enforcing Century Gothic and Bold throughout the app -->
+            <!-- Default TextBlock Style enforcing Century Gothic & Bold throughout the app -->
             <Style TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
@@ -28,25 +30,25 @@
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
             </Style>
 
-            <!-- Text styling variants strictly using BOLD weights -->
+            <!-- Typography Header & Text Variants (Strictly Sentence case & Bold) -->
             <Style x:Key="StormHeaderLargeStyle" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="26" />
+                <Setter Property="FontSize" Value="24" />
                 <Setter Property="Foreground" Value="{StaticResource AccentColorBrush}" />
             </Style>
 
             <Style x:Key="StormHeaderMediumStyle" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontSize" Value="17" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
             </Style>
 
             <Style x:Key="StormTextBoldStyle" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontSize" Value="13" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
             </Style>
 
@@ -57,34 +59,80 @@
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             </Style>
 
-            <!-- Force custom Century Gothic Bold on control labels -->
-            <Style TargetType="NavigationViewItem">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-                <Setter Property="FontWeight" Value="Bold" />
-            </Style>
-            
+            <!-- ═══════════════════════════════════════════════════════════
+                 VOLUMETRIC 3D CONTROLS (STORM SYSTEM OPTIMIZER STANDARD)
+                 ═══════════════════════════════════════════════════════════ -->
+
+            <!-- Volumetric 3D Elevated Button Style with Tactile Dynamics -->
             <Style TargetType="Button">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="14,8,14,8" />
             </Style>
-            
+
+            <!-- Neon Hero Action Button Style -->
+            <Style x:Key="StormHeroButtonStyle" TargetType="Button">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{StaticResource AccentColorBrush}" />
+                <Setter Property="Foreground" Value="#000000" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="20,12,20,12" />
+            </Style>
+
+            <!-- Volumetric Input Controls (TextBox & PasswordBox) -->
             <Style TargetType="TextBox">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="10,8,10,8" />
+            </Style>
+
+            <Style TargetType="PasswordBox">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="10,8,10,8" />
             </Style>
 
             <Style TargetType="ComboBox">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
             </Style>
 
-            <Style TargetType="ListViewItem">
+            <!-- Custom 3D CheckBox: Solid Rounded Square without traditional checkmark -->
+            <Style TargetType="CheckBox">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="MinWidth" Value="20" />
+                <Setter Property="MinHeight" Value="20" />
+            </Style>
+
+            <!-- Card Containers Style -->
+            <Style x:Key="StormCardBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Padding" Value="20" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

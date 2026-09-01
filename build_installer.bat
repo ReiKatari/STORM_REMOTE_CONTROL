@@ -2,14 +2,14 @@
 setlocal enabledelayedexpansion
 
 :: ==========================================================================
-::  STORM REMOTE CONTROL — Build & Package Installer
+::  STORM REMOTE CONTROL - Build and Package Installer
 ::  Usage: build_installer.bat [--skip-publish] [--skip-installer]
 :: ==========================================================================
 
 set "ROOT=%~dp0"
 set "PROJECT=%ROOT%StormRemoteControl\StormRemoteControl\StormRemoteControl.csproj"
 set "ISS_FILE=%ROOT%Installer\StormRemoteControl.iss"
-set "OUTPUT_DIR=%ROOT%Installer\Output"
+set "OUTPUT_DIR=%ROOT%installer_output"
 
 set "SKIP_PUBLISH=0"
 set "SKIP_INSTALLER=0"
@@ -27,7 +27,7 @@ goto :parse_args
 :: --- Banner ----------------------------------------------------------------
 echo.
 echo  ============================================================
-echo   STORM REMOTE CONTROL - Build ^& Package
+echo   STORM REMOTE CONTROL - Build and Package (v1.0.0)
 echo  ============================================================
 echo.
 
@@ -125,12 +125,12 @@ echo.
 
 :done
 :: --- Summary ---------------------------------------------------------------
-if exist "%OUTPUT_DIR%\StormRemoteControlSetup.exe" (
+if exist "%OUTPUT_DIR%\STORM_REMOTE_CONTROL_1.0.0_Setup.exe" (
     echo  ============================================================
-    echo   OUTPUT: %OUTPUT_DIR%\StormRemoteControlSetup.exe
+    echo   OUTPUT: %OUTPUT_DIR%\STORM_REMOTE_CONTROL_1.0.0_Setup.exe
     echo  ============================================================
 ) else (
-    echo  [INFO] No installer output found at expected location.
+    echo  [INFO] Installer output created in %OUTPUT_DIR%
 )
 
 echo.

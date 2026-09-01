@@ -45,6 +45,11 @@ namespace StormRemoteControl.Models
 
         public static string DeviceId { get; set; } = "";
 
+        // ── Appearance & Language ────────────────────────────────────────
+
+        public static string ActiveTheme { get; set; } = "STORM DARK";
+        public static string ActiveLanguage { get; set; } = "ru";
+
         // ── Tray / Autostart ─────────────────────────────────────────────
 
         public static bool MinimizeToTray { get; set; } = true;
@@ -99,6 +104,8 @@ namespace StormRemoteControl.Models
                     SelectedMonitor = SelectedMonitor,
                     RequireConfirmation = RequireConfirmation,
                     DeviceId = DeviceId,
+                    ActiveTheme = ActiveTheme,
+                    ActiveLanguage = ActiveLanguage,
                     MinimizeToTray = MinimizeToTray,
                     AutoStart = AutoStart,
                     StartMinimized = StartMinimized,
@@ -131,6 +138,8 @@ namespace StormRemoteControl.Models
                 SelectedMonitor = data.SelectedMonitor;
                 RequireConfirmation = data.RequireConfirmation;
                 DeviceId = data.DeviceId ?? "";
+                ActiveTheme = data.ActiveTheme ?? "STORM DARK";
+                ActiveLanguage = data.ActiveLanguage ?? "ru";
                 MinimizeToTray = data.MinimizeToTray;
                 AutoStart = data.AutoStart;
                 StartMinimized = data.StartMinimized;
@@ -163,6 +172,8 @@ namespace StormRemoteControl.Models
             public int SelectedMonitor { get; set; }
             public bool RequireConfirmation { get; set; }
             public string? DeviceId { get; set; }
+            public string? ActiveTheme { get; set; }
+            public string? ActiveLanguage { get; set; }
             public bool MinimizeToTray { get; set; }
             public bool AutoStart { get; set; }
             public bool StartMinimized { get; set; }

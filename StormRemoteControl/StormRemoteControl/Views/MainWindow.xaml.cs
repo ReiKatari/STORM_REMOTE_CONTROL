@@ -1,19 +1,18 @@
+// Copyright (c) STORM REMOTE CONTROL Contributors. All rights reserved.
+// Licensed under the MIT license.
+
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using StormRemoteControl.Services;
 
 namespace StormRemoteControl.Views
 {
     /// <summary>
     /// Top-level shell window with native Win32 system tray icon.
-    ///
-    /// Behaviour:
-    ///   • Close (X) → hides to system tray, app keeps running
-    ///   • Minimize (—) → standard minimize to taskbar
-    ///   • Tray double-click → restore window
-    ///   • Tray right-click → context menu: "Развернуть" / "Выход"
+    /// Supports dynamic 8-theme application and 6-language localization.
     /// </summary>
     public sealed partial class MainWindow : Window
     {
@@ -29,7 +28,7 @@ namespace StormRemoteControl.Views
             }
             catch (Exception ex)
             {
-                File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_log.txt"), "INNER EXCEPTION:\n" + ex.ToString() + "\n\n" + (ex.InnerException?.ToString() ?? "NO INNER"));
+                File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "crash_log.txt"), "INNER EXCEPTION:\n" + ex + "\n\n" + (ex.InnerException?.ToString() ?? "NO INNER"));
                 throw;
             }
 
@@ -55,6 +54,25 @@ namespace StormRemoteControl.Views
 
             // Create native tray icon
             _tray = new TrayIcon(this);
+
+            LocalizationService.LanguageChanged += OnLanguageChanged;
+            ThemeManager.ThemeChanged += OnThemeChanged;
+        }
+
+        private void OnLanguageChanged()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                _tray?.UpdateTexts();
+            });
+        }
+
+        private void OnThemeChanged()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                ThemeManager.ApplyTheme(ThemeManager.CurrentTheme);
+            });
         }
 
         [DllImport("user32.dll")]
@@ -104,8 +122,8 @@ namespace StormRemoteControl.Views
                 {
                     _trayNotificationShown = true;
                     _tray.ShowBalloon(
-                        "STORM REMOTE CONTROL",
-                        "Приложение свёрнуто в системный трей.\nДважды кликните по значку для восстановления.");
+                        LocalizationService.Get("TrayBalloonTitle"),
+                        LocalizationService.Get("TrayBalloonText"));
                 }
             }
         }
@@ -115,7 +133,7 @@ namespace StormRemoteControl.Views
             try
             {
                 AppWindow.SetIcon("Assets/AppIcon.ico");
-                AppWindow.Resize(new Windows.Graphics.SizeInt32(1150, 720));
+                AppWindow.Resize(new Windows.Graphics.SizeInt32(1180, 740));
 
                 var da = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary);
                 if (da != null)
@@ -132,8 +150,7 @@ namespace StormRemoteControl.Views
     #region Native Win32 Tray Icon
 
     /// <summary>
-    /// Lightweight Win32 Shell_NotifyIcon wrapper — no WPF/WinForms dependencies.
-    /// Creates a hidden message-only window to receive tray callbacks.
+    /// Lightweight Win32 Shell_NotifyIcon wrapper.
     /// </summary>
     internal sealed class TrayIcon : IDisposable
     {
@@ -262,8 +279,6 @@ namespace StormRemoteControl.Views
         public TrayIcon(MainWindow owner)
         {
             _owner = owner;
-
-            // Must prevent GC of the delegate while the window is alive
             _wndProc = WndProc;
 
             var hInstance = GetModuleHandle(null);
@@ -278,11 +293,9 @@ namespace StormRemoteControl.Views
             };
             RegisterClassEx(ref wc);
 
-            // Message-only window (HWND_MESSAGE parent)
             _hwnd = CreateWindowEx(0, className, "", 0, 0, 0, 0, 0,
                 new IntPtr(-3) /* HWND_MESSAGE */, IntPtr.Zero, hInstance, IntPtr.Zero);
 
-            // Load .ico from app directory
             IntPtr hIcon = IntPtr.Zero;
             var icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico");
             if (File.Exists(icoPath))
@@ -297,6 +310,14 @@ namespace StormRemoteControl.Views
             nid.hIcon = hIcon;
             nid.szTip = "STORM REMOTE CONTROL";
             Shell_NotifyIcon(NIM_ADD, ref nid);
+        }
+
+        public void UpdateTexts()
+        {
+            var nid = MakeNid();
+            nid.uFlags = NIF_TIP;
+            nid.szTip = "STORM REMOTE CONTROL";
+            Shell_NotifyIcon(NIM_MODIFY, ref nid);
         }
 
         public void ShowBalloon(string title, string text)
@@ -350,9 +371,9 @@ namespace StormRemoteControl.Views
         private void ShowContextMenu()
         {
             var hMenu = CreatePopupMenu();
-            AppendMenu(hMenu, MF_STRING, IDM_SHOW, "Развернуть");
+            AppendMenu(hMenu, MF_STRING, IDM_SHOW, LocalizationService.Get("TrayRestore"));
             AppendMenu(hMenu, MF_SEPARATOR, 0, "");
-            AppendMenu(hMenu, MF_STRING, IDM_EXIT, "Выход");
+            AppendMenu(hMenu, MF_STRING, IDM_EXIT, LocalizationService.Get("TrayExit"));
 
             GetCursorPos(out var pt);
             SetForegroundWindow(_hwnd);

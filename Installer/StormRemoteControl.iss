@@ -6,11 +6,11 @@
 ; ==========================================================================
 
 #define MyAppName        "STORM REMOTE CONTROL"
-#define MyAppVersion     "0.6.4"
-#define MyAppPublisher   "Storm Software"
-#define MyAppURL         "https://stormsoftware.dev"
+#define MyAppVersion     "1.0.0"
+#define MyAppPublisher   "ReiKatari"
+#define MyAppURL         "https://github.com/ReiKatari/STORM_REMOTE_CONTROL"
 #define MyAppExeName     "STORM REMOTE CONTROL.exe"
-#define MyAppMutex       "StormRemoteControl_SingleInstance_Mutex"
+#define MyAppMutex       "Global\STORM_REMOTE_CONTROL_SingleInstanceMutex"
 
 ; Paths are relative to this .iss file's location
 #define ProjectRoot      "..\StormRemoteControl\StormRemoteControl"

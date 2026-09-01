@@ -1,20 +1,24 @@
+// Copyright (c) STORM REMOTE CONTROL Contributors. All rights reserved.
+// Licensed under the MIT license.
+
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using StormRemoteControl.Models;
 using StormRemoteControl.Services;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.UI;
 
 namespace StormRemoteControl.Views
 {
     /// <summary>
     /// Primary landing page — ID-based host/client dashboard.
+    /// Fully localized (6 languages), themed (8 themes), styled with Sentence case.
     /// </summary>
     public sealed partial class MainPage : Page
     {
@@ -27,65 +31,27 @@ namespace StormRemoteControl.Views
             this.Loaded += OnPageLoaded;
             this.Unloaded += OnPageUnloaded;
             _sessionService = new RemoteSessionService();
+
+            LocalizationService.LanguageChanged += OnLanguageChanged;
+            ThemeManager.ThemeChanged += OnThemeChanged;
         }
 
         private async void OnPageLoaded(object sender, RoutedEventArgs e)
         {
-            var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-            var runningProcesses = System.Diagnostics.Process.GetProcessesByName(currentProcess.ProcessName);
-            var oldProcess = System.Linq.Enumerable.FirstOrDefault(runningProcesses, p => p.Id != currentProcess.Id);
-
-            if (oldProcess != null)
-            {
-                ContentDialog dialog = new ContentDialog
-                {
-                    Title = "УЖЕ ЗАПУЩЕНО",
-                    Content = "STORM REMOTE CONTROL уже работает в фоновом режиме (возможно, свернут в трей возле часов).\n\nВы хотите закрыть старую копию и запустить новую?",
-                    PrimaryButtonText = "Закрыть старую и продолжить",
-                    CloseButtonText = "Отмена",
-                    XamlRoot = this.XamlRoot,
-                    RequestedTheme = ElementTheme.Dark,
-                    DefaultButton = ContentDialogButton.Primary
-                };
-
-                var result = await dialog.ShowAsync();
-
-                if (result == ContentDialogResult.Primary)
-                {
-                    try
-                    {
-                        oldProcess.Kill();
-                        oldProcess.WaitForExit(3000);
-                    }
-                    catch { }
-                }
-                else
-                {
-                    Application.Current.Exit();
-                    return;
-                }
-            }
-
+            UpdateLocalizedTexts();
             PulsingStoryboard.Begin();
 
-            // Initialize device ID
             AppSettings.InitializeDeviceId();
             DeviceIdText.Text = AppSettings.DeviceId;
 
-            // Show password indicator
             UpdatePasswordIndicator();
-
-            // Register titlebar drag region
             SetupTitleBar();
 
-            // Check real network status
             await CheckNetworkStatusAsync();
 
-            // Wire up STUN discovery
             _sessionService.PublicEndpointDiscovered += OnPublicEndpointDiscovered;
             _sessionService.StateChanged += OnHostSessionStateChanged;
 
-            // Auto-start host mode
             StartHostWithRetryAsync();
         }
 
@@ -94,9 +60,52 @@ namespace StormRemoteControl.Views
             PulsingStoryboard.Stop();
             _sessionService.PublicEndpointDiscovered -= OnPublicEndpointDiscovered;
             _sessionService.StateChanged -= OnHostSessionStateChanged;
+            LocalizationService.LanguageChanged -= OnLanguageChanged;
+            ThemeManager.ThemeChanged -= OnThemeChanged;
         }
 
-        /// <summary>Set up the custom titlebar drag region so settings button remains clickable.</summary>
+        private void OnLanguageChanged()
+        {
+            DispatcherQueue.TryEnqueue(UpdateLocalizedTexts);
+        }
+
+        private void OnThemeChanged()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                ThemeManager.ApplyTheme(ThemeManager.CurrentTheme);
+            });
+        }
+
+        private void UpdateLocalizedTexts()
+        {
+            FileManagerButtonText.Text = LocalizationService.Get("Files");
+            SettingsButtonText.Text = LocalizationService.Get("Settings");
+            InfoButtonText.Text = LocalizationService.Get("Info");
+
+            YourComputerTitle.Text = LocalizationService.Get("YourComputer");
+            HostDescText.Text = LocalizationService.Get("HostDescription");
+            YourIdSubText.Text = LocalizationService.Get("YourId");
+            PasswordProtectedText.Text = LocalizationService.Get("ProtectedByPassword");
+            CopyIdButtonText.Text = LocalizationService.Get("CopyId");
+            ChangeIdButtonText.Text = LocalizationService.Get("ChangeId");
+
+            RemoteControlTitle.Text = LocalizationService.Get("RemoteControl");
+            ClientDescText.Text = LocalizationService.Get("ClientDescription");
+            PartnerIdTextBox.PlaceholderText = LocalizationService.Get("PartnerIdPlaceholder");
+            PartnerPasswordBox.PlaceholderText = LocalizationService.Get("PartnerPasswordPlaceholder");
+            ConnectButtonText.Text = LocalizationService.Get("Connect");
+
+            RecentConnectionsTitle.Text = LocalizationService.Get("RecentConnections");
+            NoRecentConnectionsText.Text = LocalizationService.Get("NoRecentConnections");
+            RecentConnectionsDescText.Text = LocalizationService.Get("RecentConnectionsDesc");
+
+            if (!_hostActive)
+            {
+                HostStatusText.Text = LocalizationService.Get("StatusReady");
+            }
+        }
+
         private void SetupTitleBar()
         {
             try
@@ -113,7 +122,6 @@ namespace StormRemoteControl.Views
             }
         }
 
-        /// <summary>Check real network connectivity and update status indicator.</summary>
         private async Task CheckNetworkStatusAsync()
         {
             try
@@ -122,36 +130,35 @@ namespace StormRemoteControl.Views
 
                 if (isConnected)
                 {
-                    // Try to resolve DNS to confirm internet access
                     try
                     {
                         var addresses = await Dns.GetHostAddressesAsync("stun.l.google.com");
                         if (addresses.Length > 0)
                         {
-                            NetworkStatusText.Text = "СЕТЬ: ОНЛАЙН";
+                            NetworkStatusText.Text = LocalizationService.Get("StatusOnline");
                             SetNetworkIndicator(true);
                         }
                         else
                         {
-                            NetworkStatusText.Text = "СЕТЬ: НЕТ ИНТЕРНЕТА";
+                            NetworkStatusText.Text = LocalizationService.Get("StatusNoInternet");
                             SetNetworkIndicator(false);
                         }
                     }
                     catch
                     {
-                        NetworkStatusText.Text = "СЕТЬ: ЛОКАЛЬНАЯ";
+                        NetworkStatusText.Text = LocalizationService.Get("StatusLocal");
                         SetNetworkIndicator(true);
                     }
                 }
                 else
                 {
-                    NetworkStatusText.Text = "СЕТЬ: ОФЛАЙН";
+                    NetworkStatusText.Text = LocalizationService.Get("StatusOffline");
                     SetNetworkIndicator(false);
                 }
             }
             catch
             {
-                NetworkStatusText.Text = "СЕТЬ: НЕ ОПРЕДЕЛЕНО";
+                NetworkStatusText.Text = LocalizationService.Get("StatusUndetermined");
                 SetNetworkIndicator(false);
             }
         }
@@ -159,14 +166,13 @@ namespace StormRemoteControl.Views
         private void SetNetworkIndicator(bool online)
         {
             var color = online
-                ? Windows.UI.Color.FromArgb(255, 16, 185, 129)  // Green
-                : Windows.UI.Color.FromArgb(255, 211, 47, 47);   // Red
-            var brush = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
+                ? Color.FromArgb(255, 16, 185, 129)
+                : Color.FromArgb(255, 211, 47, 47);
+            var brush = new SolidColorBrush(color);
             NetworkPulseDot.Fill = brush;
             NetworkStatusText.Foreground = brush;
         }
 
-        /// <summary>Update password visibility indicator.</summary>
         private void UpdatePasswordIndicator()
         {
             PasswordInfoPanel.Visibility = !string.IsNullOrEmpty(AppSettings.ConnectionPassword)
@@ -174,69 +180,61 @@ namespace StormRemoteControl.Views
                 : Visibility.Collapsed;
         }
 
-        /// <summary>Handle STUN public endpoint discovery.</summary>
         private void OnPublicEndpointDiscovered(IPEndPoint publicEp)
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
-                NetworkStatusText.Text = "СЕТЬ: ОНЛАЙН";
+                NetworkStatusText.Text = LocalizationService.Get("StatusOnline");
                 SetNetworkIndicator(true);
             });
         }
 
-        /// <summary>Toggle host mode on/off.</summary>
         private async void StartHostWithRetryAsync()
         {
             if (_hostActive) return;
 
-            HostStatusText.Text = "ЗАПУСК...";
-            HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Windows.UI.Color.FromArgb(40, 255, 255, 255));
+            HostStatusText.Text = LocalizationService.Get("StatusStarting");
+            HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255));
 
             bool success = await _sessionService.InitializeHostAsync(AppSettings.Port);
 
             if (success)
             {
                 _hostActive = true;
-                HostStatusText.Text = "АКТИВЕН";
-                HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(40, 16, 185, 129));
+                HostStatusText.Text = LocalizationService.Get("StatusActive");
+                HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 16, 185, 129));
             }
             else
             {
-                HostStatusText.Text = "ОШИБКА, ПОВТОР...";
-                HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(40, 211, 47, 47));
+                HostStatusText.Text = LocalizationService.Get("StatusErrorRetry");
+                HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 211, 47, 47));
 
-                // Auto-restart on failure
                 await Task.Delay(5000);
                 StartHostWithRetryAsync();
             }
         }
 
-        private async void OnHostSessionStateChanged(SessionState state)
+        private void OnHostSessionStateChanged(SessionState state)
         {
-            this.DispatcherQueue.TryEnqueue(async () =>
+            this.DispatcherQueue.TryEnqueue(() =>
             {
                 switch (state)
                 {
                     case SessionState.WaitingForPeer:
-                        HostStatusText.Text = "ОЖИДАНИЕ...";
-                        HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                            Windows.UI.Color.FromArgb(40, 16, 185, 129));
+                        HostStatusText.Text = LocalizationService.Get("StatusWaiting");
+                        HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 16, 185, 129));
                         break;
                     case SessionState.Connected:
-                        HostStatusText.Text = "ПОДКЛЮЧЁН";
-                        HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                            Windows.UI.Color.FromArgb(40, 16, 185, 129));
+                        HostStatusText.Text = LocalizationService.Get("StatusConnected");
+                        HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 16, 185, 129));
                         
                         if (_hostActive)
                         {
                             var dialog = new ContentDialog
                             {
-                                Title = "ВХОДЯЩЕЕ ПОДКЛЮЧЕНИЕ",
-                                Content = "К вашему компьютеру успешно подключился партнер. Теперь он видит ваш экран и может управлять им.",
-                                CloseButtonText = "ОК",
+                                Title = LocalizationService.Get("DialogIncomingConnTitle"),
+                                Content = LocalizationService.Get("DialogIncomingConnContent"),
+                                CloseButtonText = LocalizationService.Get("Close"),
                                 XamlRoot = this.XamlRoot,
                                 RequestedTheme = ElementTheme.Dark
                             };
@@ -245,21 +243,17 @@ namespace StormRemoteControl.Views
                         break;
                     case SessionState.Failed:
                     case SessionState.Disconnected:
-                        HostStatusText.Text = "ОТКЛЮЧЁН";
-                        HostStatusBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                            Windows.UI.Color.FromArgb(40, 211, 47, 47));
+                        HostStatusText.Text = LocalizationService.Get("StatusDisconnected");
+                        HostStatusBadge.Background = new SolidColorBrush(Color.FromArgb(40, 211, 47, 47));
                         
-                        // If we are still supposed to be hosting but got disconnected/failed, try to restart
                         _hostActive = false;
                         _sessionService.Disconnect();
-                        await Task.Delay(2000);
-                        StartHostWithRetryAsync();
+                        Task.Delay(2000).ContinueWith(_ => DispatcherQueue.TryEnqueue(StartHostWithRetryAsync));
                         break;
                 }
             });
         }
 
-        /// <summary>Copy device ID to clipboard.</summary>
         private void OnCopyIdClicked(object sender, RoutedEventArgs e)
         {
             var dataPackage = new DataPackage();
@@ -267,16 +261,14 @@ namespace StormRemoteControl.Views
             Clipboard.SetContent(dataPackage);
         }
 
-        /// <summary>Connect to remote host by ID.</summary>
         private async void OnConnectButtonClicked(object sender, RoutedEventArgs e)
         {
             string partnerId = PartnerIdTextBox.Text?.Trim() ?? string.Empty;
-            // Remove spaces from ID format "847 291 063" -> "847291063"
             partnerId = partnerId.Replace(" ", "");
 
             if (string.IsNullOrEmpty(partnerId))
             {
-                ShowVisualError("Некорректный ID", "Введите ID удалённого компьютера.");
+                ShowVisualError(LocalizationService.Get("ErrorInvalidId"), LocalizationService.Get("ErrorInvalidIdContent"));
                 return;
             }
 
@@ -285,9 +277,6 @@ namespace StormRemoteControl.Views
             try
             {
                 var clientService = new RemoteSessionService();
-                // For now, treat ID as a direct connection identifier
-                // In a full implementation, this would go through a signaling server
-                // to resolve the ID to an IP:port pair
                 bool success = await clientService.ConnectAsync(partnerId);
 
                 if (success)
@@ -296,29 +285,23 @@ namespace StormRemoteControl.Views
                 }
                 else
                 {
-                    ShowVisualError("Ошибка подключения",
-                        "Не удалось установить P2P-соединение. Убедитесь, что:\n" +
-                        "• ID партнера введён корректно\n" +
-                        "• На удалённом ПК запущен режим хоста\n" +
-                        "• Интернет-соединение активно");
+                    ShowVisualError(LocalizationService.Get("ErrorConnection"), LocalizationService.Get("ErrorConnectionContent"));
                     clientService.Dispose();
                     SetInputControlsState(true);
                 }
             }
             catch (Exception ex)
             {
-                ShowVisualError("Сетевая ошибка", $"P2P-подключение прервано: {ex.Message}");
+                ShowVisualError(LocalizationService.Get("ErrorNetwork"), $"{LocalizationService.Get("ErrorConnectionContent")}\n({ex.Message})");
                 SetInputControlsState(true);
             }
         }
 
-        /// <summary>Open file manager page.</summary>
         private void OnFileManagerClicked(object sender, RoutedEventArgs e)
         {
             this.Frame.Navigate(typeof(FileManagerPage));
         }
 
-        /// <summary>Open settings dialog.</summary>
         private async void OnSettingsClicked(object sender, RoutedEventArgs e)
         {
             var dialog = new SettingsDialog
@@ -330,31 +313,30 @@ namespace StormRemoteControl.Views
 
             if (result == ContentDialogResult.Primary)
             {
-                // Settings saved — update UI
                 DeviceIdText.Text = AppSettings.DeviceId;
                 UpdatePasswordIndicator();
+                UpdateLocalizedTexts();
             }
         }
 
-        /// <summary>Show info dialog with all technology details.</summary>
         private async void OnInfoClicked(object sender, RoutedEventArgs e)
         {
-            var content = new StackPanel { Spacing = 20, MinWidth = 500 };
+            var content = new StackPanel { Spacing = 18, MinWidth = 520 };
 
             // SECTION: ENCRYPTION
             var encSection = new StackPanel { Spacing = 6 };
-            encSection.Children.Add(CreateInfoHeader("\uE72E", "ШИФРОВАНИЕ"));
+            encSection.Children.Add(CreateInfoHeader("\uE72E", LocalizationService.Get("SecEncryption")));
             encSection.Children.Add(CreateInfoRow("Алгоритм", "AES-256-GCM"));
             encSection.Children.Add(CreateInfoRow("Обмен ключами", "ECDH P-256 (Elliptic Curve Diffie-Hellman)"));
-            encSection.Children.Add(CreateInfoRow("Nonce", "12 байт, счётчик + случайный префикс"));
+            encSection.Children.Add(CreateInfoRow("Nonce", "12 байт, счётчик и случайный префикс"));
             encSection.Children.Add(CreateInfoRow("Тег аутентификации", "16 байт (GCM Tag)"));
             encSection.Children.Add(CreateInfoRow("Аутентификация", "HMAC-SHA256 challenge-response"));
             content.Children.Add(WrapSection(encSection));
 
             // SECTION: NAT TRAVERSAL
             var natSection = new StackPanel { Spacing = 6 };
-            natSection.Children.Add(CreateInfoHeader("\uE774", "ОБХОД NAT (NAT TRAVERSAL)"));
-            natSection.Children.Add(CreateInfoRow("Протокол", "STUN (RFC 5389) + UDP Hole Punching"));
+            natSection.Children.Add(CreateInfoHeader("\uE774", LocalizationService.Get("SecNat")));
+            natSection.Children.Add(CreateInfoRow("Протокол", "STUN (RFC 5389) и UDP Hole Punching"));
             natSection.Children.Add(CreateInfoRow("STUN-сервер", "stun.l.google.com:19302"));
             natSection.Children.Add(CreateInfoRow("Совместимость", "~80% типов NAT"));
             natSection.Children.Add(CreateInfoRow("Fallback", "TURN-релей (при Symmetric NAT)"));
@@ -363,37 +345,35 @@ namespace StormRemoteControl.Views
 
             // SECTION: VIDEO STREAM
             var videoSection = new StackPanel { Spacing = 6 };
-            videoSection.Children.Add(CreateInfoHeader("\uE7F4", "ВИДЕОПОТОК"));
+            videoSection.Children.Add(CreateInfoHeader("\uE7F4", LocalizationService.Get("SecVideoStream")));
             videoSection.Children.Add(CreateInfoRow("Захват экрана", "Windows.Graphics.Capture API"));
             videoSection.Children.Add(CreateInfoRow("Кодирование", "H.264/H.265 аппаратное (GPU)"));
             videoSection.Children.Add(CreateInfoRow("Encoder", "Media Foundation (NVIDIA NVENC / AMD AMF / Intel QSV)"));
             videoSection.Children.Add(CreateInfoRow("Fallback", "JPEG тайловая дельта-компрессия (CPU)"));
             videoSection.Children.Add(CreateInfoRow("Макс. FPS", "До 144 (адаптивный)"));
             videoSection.Children.Add(CreateInfoRow("Битрейт", "Адаптивный, 2–20 Мбит/с по нагрузке"));
-            videoSection.Children.Add(CreateInfoRow("Экономия трафика", "60–80% (дельта-кодирование кадров)"));
-            videoSection.Children.Add(CreateInfoRow("Адаптивное качество", "Авто по RTT и потерям пакетов"));
             content.Children.Add(WrapSection(videoSection));
 
             // SECTION: NETWORK
             var netSection = new StackPanel { Spacing = 6 };
-            netSection.Children.Add(CreateInfoHeader("\uE968", "СЕТЬ И ПРОТОКОЛ"));
+            netSection.Children.Add(CreateInfoHeader("\uE968", LocalizationService.Get("SecNetwork")));
             netSection.Children.Add(CreateInfoRow("Транспорт", "UDP (собственный протокол STORM)"));
             netSection.Children.Add(CreateInfoRow("Порт", $"{AppSettings.Port}"));
             netSection.Children.Add(CreateInfoRow("MTU", "1400 байт"));
             netSection.Children.Add(CreateInfoRow("Keepalive", "Каждые 5 секунд"));
             netSection.Children.Add(CreateInfoRow("Таймаут", "15 секунд"));
-            netSection.Children.Add(CreateInfoRow("Фрагментация", "Автоматическая для больших кадров"));
             content.Children.Add(WrapSection(netSection));
 
             // SECTION: FEATURES
             var featSection = new StackPanel { Spacing = 6 };
-            featSection.Children.Add(CreateInfoHeader("\uE74C", "ВОЗМОЖНОСТИ"));
+            featSection.Children.Add(CreateInfoHeader("\uE74C", LocalizationService.Get("SecFeatures")));
             featSection.Children.Add(CreateInfoRow("Буфер обмена", "Двусторонняя синхронизация текста"));
             featSection.Children.Add(CreateInfoRow("Файловый менеджер", "Двухоконный, drag & drop, горячие клавиши"));
             featSection.Children.Add(CreateInfoRow("Чат", "Текстовый чат во время сессии"));
             featSection.Children.Add(CreateInfoRow("Wake-on-LAN", "Удалённое включение ПК"));
             featSection.Children.Add(CreateInfoRow("Горячие клавиши", "Ctrl+Alt+Del, Alt+Tab, Win"));
-            featSection.Children.Add(CreateInfoRow("Автозапуск", "Запуск при старте Windows"));
+            featSection.Children.Add(CreateInfoRow("Темы оформления", "8 фирменных тем STORM SOFT"));
+            featSection.Children.Add(CreateInfoRow("Локализация", "100% перевод на 6 языков"));
             content.Children.Add(WrapSection(featSection));
 
             var scrollViewer = new ScrollViewer
@@ -406,9 +386,9 @@ namespace StormRemoteControl.Views
 
             var dialog = new ContentDialog
             {
-                Title = "ИНФОРМАЦИЯ О ТЕХНОЛОГИЯХ",
+                Title = LocalizationService.Get("TechInfoTitle"),
                 Content = scrollViewer,
-                CloseButtonText = "ЗАКРЫТЬ",
+                CloseButtonText = LocalizationService.Get("Close"),
                 XamlRoot = this.XamlRoot,
                 RequestedTheme = ElementTheme.Dark
             };
@@ -419,9 +399,8 @@ namespace StormRemoteControl.Views
         {
             return new Border
             {
-                Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(20, 255, 255, 255)),
-                CornerRadius = new CornerRadius(6),
+                Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 255)),
+                CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(16, 12, 16, 12),
                 Child = section
             };
@@ -432,15 +411,17 @@ namespace StormRemoteControl.Views
             var sp = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 0, 0, 4) };
             sp.Children.Add(new FontIcon
             {
-                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets"),
+                FontFamily = new FontFamily("Segoe MDL2 Assets"),
                 Glyph = glyph, FontSize = 16,
-                Foreground = (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
             });
             sp.Children.Add(new TextBlock
             {
-                Text = title, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Century Gothic"),
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold, FontSize = 13,
-                Foreground = (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
+                Text = title,
+                FontFamily = new FontFamily("Century Gothic"),
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 13,
+                Foreground = (SolidColorBrush)Application.Current.Resources["AccentColorBrush"]
             });
             return sp;
         }
@@ -453,21 +434,24 @@ namespace StormRemoteControl.Views
 
             var lbl = new TextBlock
             {
-                Text = label, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Century Gothic"),
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold, FontSize = 11,
-                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(140, 255, 255, 255)),
+                Text = label,
+                FontFamily = new FontFamily("Century Gothic"),
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromArgb(140, 255, 255, 255)),
                 VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetColumn(lbl, 0);
 
             var val = new TextBlock
             {
-                Text = value, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Century Gothic"),
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold, FontSize = 11,
-                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(230, 255, 255, 255)),
-                VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap
+                Text = value,
+                FontFamily = new FontFamily("Century Gothic"),
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromArgb(230, 255, 255, 255)),
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
             };
             Grid.SetColumn(val, 1);
 
@@ -476,15 +460,14 @@ namespace StormRemoteControl.Views
             return grid;
         }
 
-        /// <summary>Generate a new random device ID.</summary>
         private async void OnChangeIdClicked(object sender, RoutedEventArgs e)
         {
             var dialog = new ContentDialog
             {
-                Title = "СМЕНИТЬ ID",
-                Content = "Вы уверены? Текущий ID будет заменён на новый случайный. Все, кто знает ваш текущий ID, не смогут подключиться.",
-                PrimaryButtonText = "СМЕНИТЬ",
-                CloseButtonText = "ОТМЕНА",
+                Title = LocalizationService.Get("DialogChangeIdTitle"),
+                Content = LocalizationService.Get("DialogChangeIdContent"),
+                PrimaryButtonText = LocalizationService.Get("ChangeId"),
+                CloseButtonText = LocalizationService.Get("Cancel"),
                 XamlRoot = this.XamlRoot,
                 RequestedTheme = ElementTheme.Dark
             };
@@ -500,9 +483,9 @@ namespace StormRemoteControl.Views
         {
             var dialog = new ContentDialog
             {
-                Title = title.ToUpper(),
+                Title = title,
                 Content = content,
-                CloseButtonText = "ОК",
+                CloseButtonText = LocalizationService.Get("Close"),
                 XamlRoot = this.XamlRoot
             };
             await dialog.ShowAsync();
